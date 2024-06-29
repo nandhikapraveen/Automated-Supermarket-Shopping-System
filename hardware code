@@ -1,0 +1,187 @@
+#include <SPI.h>
+#include <MFRC522.h>
+
+#define SS_PIN 48
+#define RST_PIN 49
+MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance.
+int pr1=100;
+int pr2=350;
+int sum=0;
+int c=0;
+int buzz=A6;
+
+// DISPLAY
+#include <Adafruit_TFTLCD.h> 
+#include<MCUFRIEND_kbv.h>
+#include <Adafruit_GFX.h>    
+#include <TouchScreen.h>
+
+#define LCD_CS A3 //chip select
+#define LCD_CD A2 //rs register select
+#define LCD_WR A1 //write
+#define LCD_RD A0 //read
+#define LCD_RESET A4 
+
+#define TS_MINX 122
+#define TS_MINY 111
+#define TS_MAXX 942
+#define TS_MAXY 890
+
+#define YP A1
+#define XM A2
+#define YM 7
+#define XP 6
+
+#define BLACK   0x0000
+#define BLUE    0x001F
+#define RED     0xF800
+#define GREEN   0x07E0
+#define CYAN    0x07FF
+#define MAGENTA 0xF81F
+#define YELLOW  0xFFE0
+#define WHITE   0xFFFF
+
+MCUFRIEND_kbv tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
+
+// int card=2;
+void setup() 
+{
+  Serial.begin(9600);   // Initiate a serial communication
+  SPI.begin();      // Initiate  SPI bus
+  mfrc522.PCD_Init();   // Initiate MFRC522
+  Serial.println("Put your card to the reader...");
+  Serial.println();
+
+  tft.reset();
+  uint16_t identifier = tft.readID();
+  tft.begin(identifier);
+  tft.setRotation(2);
+  tft.fillScreen(WHITE);
+  
+  tft.setCursor(0,80);
+  tft.setTextColor(BLACK);
+  tft.setTextSize(5);
+  tft.print("SCAN\nTHE\nPRODUCT");
+  
+  // delay(2000);
+  // if(card==2 ){
+  // tft.fillScreen(WHITE);
+  // tft.setCursor(25,15);
+  // tft.setTextColor(BLACK);
+  // tft.setTextSize(3);
+  // tft.print("ITEMS");
+  // tft.fillRect(0,55, 240, 55, BLACK);
+  // tft.drawRect(0,55,240,55,CYAN);
+
+  // tft.setCursor(25,170);
+  // tft.setTextColor(BLACK);
+  // tft.setTextSize(3);
+  // tft.print("TOTAL:");
+  // tft.fillRect(60,200, 120, 80,YELLOW);
+  // tft.drawRect(60,200,120,80,RED);
+
+pinMode(buzz,OUTPUT);
+  
+}
+void loop() 
+{
+  // Look for new cards
+  if ( ! mfrc522.PICC_IsNewCardPresent()) 
+  {
+    return;
+  }
+  // Select one of the cards
+  if ( ! mfrc522.PICC_ReadCardSerial()) 
+  {
+    return;
+  }
+  //Show UID on serial monitor
+  Serial.print("UID tag :");
+  String content= "";
+  byte letter;
+  for (byte i = 0; i < mfrc522.uid.size; i++) 
+  {
+     Serial.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");
+     Serial.print(mfrc522.uid.uidByte[i], HEX);
+     content.concat(String(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " "));
+     content.concat(String(mfrc522.uid.uidByte[i], HEX));
+  }
+  Serial.println();
+  Serial.print("Message : ");
+  content.toUpperCase();
+  if (content.substring(1) == "E3 DB 3B 90") //change here the UID of the card/cards that you want to give access
+  {
+
+    analogWrite(buzz,200);
+    delay(100);
+    analogWrite(buzz,0);
+    // tft.reset();
+    Serial.println("Parle-G Family Pack     Price-Rs100");
+    Serial.println();
+
+    // DISPLAY
+  tft.fillScreen(BLUE);
+  tft.setCursor(25,15);
+  tft.setTextColor(BLACK);
+  tft.setTextSize(3);
+  tft.print("ITEMS");
+  tft.fillRect(0,55, 240, 55, BLACK);
+  tft.drawRect(0,55,240,55,CYAN);
+  tft.setCursor(25,170);
+  tft.setTextColor(BLACK);
+  tft.setTextSize(3);
+  tft.print("TOTAL:");
+  tft.fillRect(60,200, 120, 80,YELLOW);
+  tft.drawRect(60,200,120,80,RED);
+  
+    tft.setCursor(75,75);
+    tft.setTextColor(GREEN);
+    tft.setTextSize(2);
+    tft.print("Parle-G");
+    sum+=pr1;
+    delay(2000);
+
+
+  }
+ 
+ else if (content.substring(1) == "03 08 DB 91")   
+ {
+    analogWrite(buzz,200);
+    delay(100);
+    analogWrite(buzz,0);
+
+    Serial.println("Chicken-1KG     Price-Rs350");
+    Serial.println();
+    
+  tft.fillScreen(BLUE);
+  tft.setCursor(25,15);
+  tft.setTextColor(BLACK);
+  tft.setTextSize(3);
+  tft.print("ITEMS");
+  tft.fillRect(0,55, 240, 55, BLACK);
+  tft.drawRect(0,55,240,55,CYAN);
+  tft.setCursor(25,170);
+  tft.setTextColor(BLACK);
+  tft.setTextSize(3);
+  tft.print("TOTAL:");
+  tft.fillRect(60,200, 120, 80,YELLOW);
+  tft.drawRect(60,200,120,80,RED);
+  
+    
+    tft.setCursor(75,75);
+    tft.setTextColor(GREEN);
+    tft.setTextSize(2);
+    tft.print("chicken");
+    sum+=pr2;
+    delay(2000);
+}
+
+
+Serial.print("Total: ");
+Serial.println((int)sum);
+  tft.setCursor(85,230);
+  tft.setTextColor(BLACK);
+  tft.setTextSize(2);
+  tft.print((int)sum);
+delay(1000);
+}
